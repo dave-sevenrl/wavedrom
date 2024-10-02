@@ -1,9 +1,10 @@
 'use strict';
-//const waveSkin = require('./lib/wave-skin.js');
-//const renderSignal = require('./lib/render-signal.js');
-//const stringify = require('onml/stringify.js');
-//const w3 = require('./lib/w3.js');
-//const fs = require("fs");
+const waveSkin = require('./lib/wave-skin.js');
+const renderSignal = require('./lib/render-signal.js');
+const stringify = require('onml/stringify.js');
+const w3 = require('./lib/w3.js');
+const fs = require("fs");
+const sharp = require('sharp');
 const express = require('express');
 /*
 const fs = require('fs');
@@ -132,15 +133,63 @@ function generateRandomID() {
 
 // create object
 function create_svg_from_json(json) { 
-  var svg = "12345";
+  console.log("create_svg_from_json()");
+
+  // Render into SVG and release it
+  const obj = eval('(' + json + ')');
+  var arr = renderSignal(0, obj, waveSkin, 0);
+  arr[1].xmlns = w3.svg;
+  arr[1]['xmlns:xlink'] = w3.xlink;
+
+  // Render final SVG graphics
+  const svg = stringify(arr);
+  //console.log('svg' + svg);
+
   return svg;
+
 };
+
+
+// create PNG from SVG
+async function run_png_from_svg(svg) {
+  let png = await sharp(Buffer.from(svg), {density : 800})
+              .png()
+              .toBuffer();
+  console.log('run_png_from_svg() finished');
+
+  return png;
+
+}
 
 // create PNG from SVG
 function create_png_from_svg(svg) {
-  var png = svg + ".png";
-  return png;
+  //var png = svg + ".png";
+  //return png;
+//var png = create_png_from_svg(svg).then(function(results) {
+  /*
+  var png;
+  run_png_from_svg(svg).then(result => { 
+    console.log("create_png_from_svg()");
+
+    var png = result;
+    */
+  var png = run_png_from_svg(svg);
+
+  let result = Promise.all([png]).then((res) => {
+    console.log('Promise-all' + res)
+  })
+    //const png_fn = 'new_png.png';
+    //fs.writeFile(png_fn, png, (err) => {
+    //  if (err) throw err;
+    //})
+    console.log("created PNG " + png.length + " bytes");
+    //return png;
+    return result;
+
+  //});
+
 }
+
 
 // ------------------------------------------
 // Database object
@@ -208,6 +257,7 @@ function update_diagram_in_database(diagramId, json) {
   var svg = create_svg_from_json(json);
   // create PNG
   var png = create_png_from_svg(svg);
+  console.log("returned from create_png_from_svg()");
 
   // Update database
   data_object['svg'] = svg;

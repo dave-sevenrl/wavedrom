@@ -188,11 +188,30 @@ if __name__ == '__main__':
     # Get the reponse
     api_url = f"http://127.0.0.1:3000/diagrams/{resp_data['diagramId']}"
     #todo = {"userId": 1, "title": "Buy milk", "completed": False}
-    todo = {"json": "Dave was here"}
+    todo = {"json": """{signal: [
+  {name: 'clk', wave: 'p.....|...'},
+  {name: 'dat', wave: 'x.345x|=.x', data: ['head', 'body', 'tail', 'data']},
+  {name: 'req', wave: '0.1..0|1.0'},
+  {},
+  {name: 'ack', wave: '1.....|01.'}
+]}"""}
     todo['privateKey'] = resp_data['privateKey']
     response = requests.put(api_url, json=todo)
-    print(response)
-    print(f'response: {response.json()}')
+    diag_results = response.json();
+    #print(response)
+    print(f'diag_results: {diag_results.keys()}')
+    print(response.status_code)
+
+    # Get the reponse
+    api_url = f"http://127.0.0.1:3000/diagrams/{resp_data['diagramId']}"
+    #todo = {"userId": 1, "title": "Buy milk", "completed": False}
+    todo = {}
+    todo['privateKey'] = resp_data['privateKey']
+    response = requests.get(api_url, json=todo)
+    diag_results = response.json();
+    print(f'diag_results: {diag_results.keys()}')
+    #print(response)
+    #print(f'response: {response.json()}')
     print(response.status_code)
 
 
