@@ -184,7 +184,7 @@ function create_diagram_in_database() {
 }
 
 function check_diagram_id(diagramId, req_body) {
-  if (("privateKey" in req_body) && ("json" in req_body)) {
+  if ("privateKey" in req_body) {
     if (data_store.hasOwnProperty(diagramId))  {
       var data_object = data_store[diagramId];
       if (data_object["privateKey"] == req_body.privateKey) {
@@ -229,11 +229,18 @@ function update_diagram_in_database(diagramId, json) {
 }
 
 function get_diagram_from_database(diagramId) {
-  if (data_store.hasOwnProptery(diagramId)) { 
-    return data_store[diagramId];
-  } else { 
-    return {};
-  }
+  var data_object = data_store[diagramId];
+  var resp_object = new Object();
+  console.log("get_diagram_from_database("+diagramId+")");
+
+  // Update JSON
+  resp_object['svg'] = data_object['svg'];
+  resp_object['png'] = data_object['png'];
+  resp_object['json'] = data_object['json'];
+
+  //return JSON.stringify(resp_object);
+  return resp_object;
+
 }
 
 // ------------------------------------------
@@ -242,49 +249,22 @@ function get_diagram_from_database(diagramId) {
 
 // creates a new ID
 app.post('/diagrams', (req, res) => {    
-  //const userID = generateRandomID();
   var status_code = 200;
-  //console.log('Creating new ID '+userID); 
-  //console.log(req.query); // object
   console.log('POST /diagrams: ' + req.body);
   var json_resp = create_diagram_in_database();
   res.status(status_code).json(json_resp);
-
-//  var svg = "";
-//  if ("json" in req.body) { 
-//    svg = create_svg(req.body.json);
-//    png = req.body
-//  }
-//  var png = create_png(svg);
-
-
-//  var json_resp
-//  if ()(svg == "") || (png == "")) {
-//    status_code = 400;
-//    var
-//  }
-
- // var json_resp = create_diagram_in_database(svg, png);
-
-  //req.body.diagramId = userID;
-  //req.body.png = "ABDCD";
-  //req.body.private_key = "ABDCD";
-  //data_store[userID] = req.body;
-
-  //var response = req.body;
-
-  //req.body['diagram_id'] = userID
-// / var email = req.body.email;
-//  res.send(req.query);
 })
 
+// Updates the diagram with JSON update
 app.put('/diagrams/:id', (req, res) => {    
   const diagramId = req.params.id;
   var status_code = 200;
   console.log("PUT request to update SVG/PNG on " + req.body);
 
   var json_resp = new Object();
-  if (check_diagram_id(diagramId, req.body)) { 
+  if (!("json" in req.body)) { 
+    status_code = 400;
+  } else if (check_diagram_id(diagramId, req.body)) {
     json_resp = update_diagram_in_database(diagramId, req.body.json);
     if (!("png" in json_resp)) { 
       status_code = 201;
@@ -294,19 +274,25 @@ app.put('/diagrams/:id', (req, res) => {
   }
 
   res.status(status_code).json(json_resp);
+
 })
 
-
-//app.post('/userlogin', (req, res) => {    
-//  console.log(req.body) // object
-////  var email = req.body.email;
-//})
+// Updates the diagram with JSON update
 app.get('/diagrams/:id', (req, res) => {    
-  const userID = req.params.id;
-  console.log("GET a request on " + userID);
-  //console.log(req.query); // object
-  console.log(data_store)
-//  var email = req.body.email;
-  res.status(200).json(data_store[userID])
-//  res.send(req.query);
+  const diagramId = req.params.id;
+  var status_code = 200;
+  console.log("GET request for SVG/PNG on " + req.body);
+
+  var json_resp = new Object();
+  if (check_diagram_id(diagramId, req.body)) {
+    json_resp = get_diagram_from_database(diagramId);
+    if (!("png" in json_resp)) { 
+      status_code = 201;
+    }
+  } else { 
+    status_code = 400;
+  }
+
+  res.status(status_code).json(json_resp);
+
 })
