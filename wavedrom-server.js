@@ -19,36 +19,14 @@ const app = express ();
 app.use(express.json());
 app.use(express.urlencoded());
 
-// Read command line
-//process.argv.forEach(function (val, index, array) {
-//  if ((val == '--json') || (val == '-j')) {
-//    json_fn = process.argv[index+1];
-//  }
-//  if ((val == '--svg') || (val == '-s')) {
-//    svg_fn = process.argv[index+1];
-//  }
-//});
-//console.log('node wavedrom-svg-gen.js [-j/--json json_file.json] [-s/--svg svg_output.svg]')
-//console.log('\nReading JSON ' + json_fn);
-//console.log('Writing to ' + svg_fn);
-
-// Read the JSON file and convert to an object
-//var text = fs.readFileSync(json_fn, "utf-8");
-//const obj = eval('(' + text + ')');
-//console.log(obj);
-
-// Render into SVG and release it
-//var arr = renderSignal(0, obj, waveSkin, 0);
-//arr[1].xmlns = w3.svg;
-//arr[1]['xmlns:xlink'] = w3.xlink;
-//console.log('svg' + svg);
-
 // Render final SVG graphics
 //const svg = stringify(arr);
 //fs.writeFile(svg_fn, svg, (err) => {
 //  if (err) throw err;
 //})
 const PORT = process.env.PORT || 3000;
+
+var data_store = new Object();
 
 /*
 // Adds HTTPS server
@@ -74,13 +52,7 @@ POST /diagrams - Create a new diagram
 GET /diagrams/<diagram_id>
 PUT /diagrams/<diagram_id>
 DELETE /diagrams/<diagram_id>
-
-
-
-
-
 */
-
 
 app.listen(PORT, () => {
   console.log("Server Listening on PORT:", PORT)
@@ -94,27 +66,82 @@ app.get("/", (req, res) => {
   // response to the client
   // Here we are sending html
   const html = `<!doctype html>
-<html lang="en-US">
+ <html>
     <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width" />
-      <title>Testing Wavedrom script</title>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js" type="text/javascript"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js" type="text/javascript"></script>
-  
+        <meta charset="UTF-8">
+        <title>WaveDrom LLM Editor</title>
+        <link rel="shortcut icon" href="images/favicon.ico"/>
+        <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+        <style>
+            textarea.json-control {
+                background: LightGray;
+                width: 100%;
+                height: 33%;
+            }
+            textarea.llm-control {
+                background: LightBlue;
+                width: 100%;
+                height: 33%;
+            }
+        </style>
     </head>
-<body onload="WaveDrom.ProcessAll()">
-    <script type="WaveDrom">
-  { signal : [
-    { name: "clk",  wave: "p......" },
-    { name: "bus",  wave: "x.34.5x",   data: "head body tailasdfs" },
-    { name: "wire", wave: "0.1..0." },
-  ]}
-</script>
-</body>
-</html>`;
+    <body>
+        <div id="content">
+            <div id="TXT"><textarea class="json-control" onchange="copyJSON()" id="JSON"></textarea></div>
+            <div id="LLM"><textarea class="llm-control" onchange="alert(dave)" id="LLM-Text"></textarea></div>
+            <div id="SVG"><svg id="SVG"></svg></div>
+        </div>
+        <script>
+        var e, val;
 
-  //res.send("<h1>Hello World</h1>");
+        const getDiagramId = async (json_text) => {
+          console.log('json_text ['+json_text+']');
+          let json_obj = eval('(' + json_text + ')');
+          let json = JSON.stringify(json_obj);
+          console.log('Testing : ' + json)
+          const response = await fetch('http://127.0.0.1:3000/diagrams', {
+            method: 'PUT',
+            body: json,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const myJson = await response.json(); //extract JSON from the http response
+          const svg = await myJson['svg'];
+          //console.log(myJson);
+          //return myJson['svg'];
+          return svg;
+          // do something with myJson
+        }
+        //getDiagramId();
+
+        e = document.getElementById('JSON');
+        e.addEventListener("input", copyJSON);
+
+        function copyJSON() { 
+          var json_in = document.getElementById('JSON');
+          var llm_out = document.getElementById('LLM-Text');
+          llm_out.value = json_in.value;
+          console.log('Checking the json_in text = '+json_in.value);
+          //let json_obj = stringify(json_in.value);
+          //getDiagramId(JSON.parse(eval(json_in.value)));
+          //getDiagramId(eval(json_in.value));
+          let svg = getDiagramId(json_in.value);
+
+          svg.then(data => {
+            var SVG_ID = document.getElementById('SVG');
+            SVG_ID.innerHTML = data;
+            console.log('Resolved ' + data);
+          })
+          //SVG_ID.innerHTML = svg;
+        }
+
+        val = \`{signal: [\n  {name: \'clk\', wave: \'p.....|...\'},\n  {name: \'dat\', wave: \'x.345x|=.x\', data: [\'head\', \'body\', \'tail\', \'data\']},\n  {name: \'req\', wave: \'0.1..0|1.0\'},\n  {},\n  {name: \'ack\', wave: \'1.....|01.\'}\n]}\n\`;
+        e.value = val; 
+        </script>
+    </body>
+</html>`;
+  
   res.send(html);
 });
 
@@ -162,17 +189,21 @@ async function run_png_from_svg(svg) {
 }
 
 // create PNG from SVG
-function create_png_from_svg(svg) {
+function create_png_from_svg(diagramId, svg) {
   //var png = svg + ".png";
   //return png;
 //var png = create_png_from_svg(svg).then(function(results) {
+  run_png_from_svg(svg).then(result => { 
+      console.log("create_png_from_svg()" + result.length);
+      var data_object = data_store[diagramId];
+      data_object['png'] = result;
+
+      data_store[diagramId] = data_object;
+  })
   /*
   var png;
-  run_png_from_svg(svg).then(result => { 
-    console.log("create_png_from_svg()");
 
     var png = result;
-    */
   var png = run_png_from_svg(svg);
 
   let result = Promise.all([png]).then((res) => {
@@ -187,6 +218,7 @@ function create_png_from_svg(svg) {
     return result;
 
   //});
+    */
 
 }
 
@@ -194,7 +226,6 @@ function create_png_from_svg(svg) {
 // ------------------------------------------
 // Database object
 // ------------------------------------------
-var data_store = new Object();
 
 // create the database iterm
 function create_diagram_in_database() {
@@ -253,25 +284,24 @@ function update_diagram_in_database(diagramId, json) {
 
   // Update JSON
   data_object['json'] = json;
-  // create object
+
+  // create SVG object
   var svg = create_svg_from_json(json);
-  // create PNG
-  var png = create_png_from_svg(svg);
-  console.log("returned from create_png_from_svg()");
 
   // Update database
   data_object['svg'] = svg;
-  data_object['png'] = png;
+  data_object['png'] = "";
   data_store[diagramId] = data_object;
 
-  // update the response
-  if ((svg != "") && (svg != "")) { 
-    resp_object['svg'] = svg;
-    resp_object['png'] = png;
-  }
+  // create PNG
+  create_png_from_svg(diagramId, svg);
+  //console.log("returned from create_png_from_svg()");
 
-  // Get the response
-  //console.log('   resp = ' + resp_object);
+  // update the response
+  //if (svg != "") {
+  resp_object['json'] = json;
+  resp_object['svg'] = svg;
+  //}
 
   //return JSON.stringify(resp_object);
   return resp_object;
@@ -305,6 +335,29 @@ app.post('/diagrams', (req, res) => {
   res.status(status_code).json(json_resp);
 })
 
+
+// Updates the diagram with JSON update
+app.put('/diagrams', (req, res) => {    
+  var status_code = 200;
+  console.log("PUT request to update SVG/PNG on " + req.body + " " + Object.keys(req.body));
+  let inval = JSON.stringify(req.body);
+  console.log("PUT request to update SVG/PNG on " + inval);
+  //console.log("PUT request to update SVG/PNG on " + req.body.signal);
+  //console.log("PUT request to update SVG/PNG on " + req.body.json);
+  //console.log("PUT request to update SVG/PNG on " + Object.keys(req.body.json));
+
+  // create SVG object
+  var svg = create_svg_from_json(inval);
+
+  // Update database
+  var resp_object = new Object();
+  resp_object['svg'] = svg;
+  console.log('svg = ' + svg);
+
+  res.status(status_code).json(resp_object);
+
+})
+
 // Updates the diagram with JSON update
 app.put('/diagrams/:id', (req, res) => {    
   const diagramId = req.params.id;
@@ -316,7 +369,7 @@ app.put('/diagrams/:id', (req, res) => {
     status_code = 400;
   } else if (check_diagram_id(diagramId, req.body)) {
     json_resp = update_diagram_in_database(diagramId, req.body.json);
-    if (!("png" in json_resp)) { 
+    if (!("svg" in json_resp)) { 
       status_code = 201;
     }
   } else { 
@@ -336,8 +389,8 @@ app.get('/diagrams/:id', (req, res) => {
   var json_resp = new Object();
   if (check_diagram_id(diagramId, req.body)) {
     json_resp = get_diagram_from_database(diagramId);
-    if (!("png" in json_resp)) { 
-      status_code = 201;
+    if (json_resp["png"] == "") { 
+      status_code = 220;
     }
   } else { 
     status_code = 400;
