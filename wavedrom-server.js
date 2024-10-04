@@ -62,87 +62,12 @@ app.listen(PORT, () => {
 // Here it listens to the root i.e '/'
 app.get("/", (req, res) => {
 
-  // Using send function we send
-  // response to the client
-  // Here we are sending html
-  const html = `<!doctype html>
- <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>WaveDrom LLM Editor</title>
-        <link rel="shortcut icon" href="images/favicon.ico"/>
-        <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono&display=swap" rel="stylesheet">
-        <style>
-            textarea.json-control {
-                background: LightGray;
-                width: 100%;
-                height: 33%;
-            }
-            textarea.llm-control {
-                background: LightBlue;
-                width: 100%;
-                height: 33%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="content">
-            <div id="TXT"><textarea class="json-control" onchange="copyJSON()" id="JSON"></textarea></div>
-            <div id="LLM"><textarea class="llm-control" onchange="alert(dave)" id="LLM-Text"></textarea></div>
-            <div id="SVG"><svg id="SVG"></svg></div>
-        </div>
-        <script>
-        var e, val;
-
-        const getDiagramId = async (json_text) => {
-          console.log('json_text ['+json_text+']');
-          let json_obj = eval('(' + json_text + ')');
-          let json = JSON.stringify(json_obj);
-          console.log('Testing : ' + json)
-          const response = await fetch('http://127.0.0.1:3000/diagrams', {
-            method: 'PUT',
-            body: json,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-          const myJson = await response.json(); //extract JSON from the http response
-          const svg = await myJson['svg'];
-          //console.log(myJson);
-          //return myJson['svg'];
-          return svg;
-          // do something with myJson
-        }
-        //getDiagramId();
-
-        e = document.getElementById('JSON');
-        e.addEventListener("input", copyJSON);
-
-        function copyJSON() { 
-          var json_in = document.getElementById('JSON');
-          var llm_out = document.getElementById('LLM-Text');
-          llm_out.value = json_in.value;
-          console.log('Checking the json_in text = '+json_in.value);
-          //let json_obj = stringify(json_in.value);
-          //getDiagramId(JSON.parse(eval(json_in.value)));
-          //getDiagramId(eval(json_in.value));
-          let svg = getDiagramId(json_in.value);
-
-          svg.then(data => {
-            var SVG_ID = document.getElementById('SVG');
-            SVG_ID.innerHTML = data;
-            console.log('Resolved ' + data);
-          })
-          //SVG_ID.innerHTML = svg;
-        }
-
-        val = \`{signal: [\n  {name: \'clk\', wave: \'p.....|...\'},\n  {name: \'dat\', wave: \'x.345x|=.x\', data: [\'head\', \'body\', \'tail\', \'data\']},\n  {name: \'req\', wave: \'0.1..0|1.0\'},\n  {},\n  {name: \'ack\', wave: \'1.....|01.\'}\n]}\n\`;
-        e.value = val; 
-        </script>
-    </body>
-</html>`;
+  // Read the HTML and serve it
+  let html_fn = 'wavedrom-server.html'
+  var html_text = fs.readFileSync(html_fn, "utf-8");
+  //console.log(html_text);
+  res.send(html_text);
   
-  res.send(html);
 });
 
 app.get("/status", (request, response) => {
@@ -352,7 +277,7 @@ app.put('/diagrams', (req, res) => {
   // Update database
   var resp_object = new Object();
   resp_object['svg'] = svg;
-  console.log('svg = ' + svg);
+  console.log('svg = ' + svg.length + " bytes");
 
   res.status(status_code).json(resp_object);
 
