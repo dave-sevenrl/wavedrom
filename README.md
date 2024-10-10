@@ -126,6 +126,11 @@ is an online real-time editor of digital timing diagrams based on the **WaveDrom
 2. Unzip
 3. Run
 
+## Wavedrom LLM Server
+
+1. Install tspan: npm i tspan sharp express @google/generative-ai
+2. Launch server: node lib/wavedrom-llm-server.js
+
 ## Community
 
 Please use the [WaveDrom user group](http://groups.google.com/group/wavedrom) for discussions, questions, ideas, or whatever.
