@@ -13,8 +13,11 @@ if __name__ == '__main__':
     parser.add_argument('--delta-v', type=float, help='Sets quantization set in mV')
     args = parser.parse_args()
 
+    main_url = 'http://wavedrom-llm-802454156912.us-west1.run.app'
+    #main_url = 'http://127.0.0.1:3000'
+
     # Get a new chat ID
-    api_url = "http://127.0.0.1:3000/newchat"
+    api_url = f"{main_url}/newchat"
     todo = {"private_key": "1234"}
     response = requests.post(api_url, json=todo)
     print(response.status_code)
@@ -24,7 +27,7 @@ if __name__ == '__main__':
     chat_id = resp_data['chat_id']
 
     # Generate two reponses
-    api_url = f"http://127.0.0.1:3000/chat/{chat_id}"
+    api_url = f"{main_url}/chat/{chat_id}"
     todo = {"prompt" : "Generate a clock named PCK with 10 negative edges"}
     response = requests.put(api_url,json=todo)
     resp_data = response.json()
@@ -43,7 +46,7 @@ if __name__ == '__main__':
         print(f'Error {response.status_code} - failed to use model {chat_id}')
 
     # Create an SVG file
-    api_url = f"http://127.0.0.1:3000/create_svg"
+    api_url = f"{main_url}/create_svg"
     #todo = {"json" : resp_data["json"]}
     response = requests.put(api_url,json=resp_data)
     resp_data = response.json()
@@ -53,7 +56,7 @@ if __name__ == '__main__':
         print(f'Error {response.status_code} - failed to produce SVG output')
 
     # Create an PNG file
-    api_url = f"http://127.0.0.1:3000/create_png"
+    api_url = f"{main_url}/create_png"
     response = requests.put(api_url,json=resp_data)
     resp_data = response.json()
     if response.status_code == 200:
@@ -62,7 +65,7 @@ if __name__ == '__main__':
         print(f'Error {response.status_code} - failed to produce PNG output')
 
     # Finally delete it
-    api_url = f"http://127.0.0.1:3000/chat/{chat_id}"
+    api_url = f"{main_url}/chat/{chat_id}"
     response = requests.delete(api_url)
     if response.status_code == 204:
         print(f'Successfully deleted {chat_id}')

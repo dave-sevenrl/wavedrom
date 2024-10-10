@@ -6,12 +6,13 @@
   "license": "MIT",
   "main": "./lib/wavedrom-llm-server.js",
   "private": true,
-  "type": "module",
   "files": [
     "LICENSE",
     "lib/**",
     "llm/**",
-    "skins/**"
+    "skins/**",
+    "key.pem",
+    "cert.pem"
   ],
   "scripts": {
     "start": "node lib/wavedrom-llm-server.js"
