@@ -1,0 +1,106 @@
+<!doctype html> 
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>WaveDrom LLM Editor</title>
+        <link rel="shortcut icon" href="images/favicon.ico"/>
+        <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+        <style>
+            #TXT {
+              height: 33vh;
+              width : 100vw;
+              background: LightGray;
+            }
+            #LLM {
+              height: 33vh;
+              width : 100vw;
+              background: LightBlue;
+            }
+            #SVG {
+              height: 33vh;
+              width : 100vw;
+            }
+            textarea.json-control {
+                width: 100%;
+                height: 100%;
+                overflow-y: scroll;
+            }
+            #llm_history_id {
+                width: 100%;
+                height: 60%;
+                overflow-y: scroll;
+            }
+            #llm_instruction_id {
+                width: 100%;
+                height: 20%;
+                overflow-y: scroll;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            <div id="TXT"><textarea class="json-control" id="JSON"></textarea></div>
+            <div id="LLM">
+              <textarea class="llm-history" readonly id="llm_history_id"></textarea>
+              <textarea class="llm-instruction" id="llm_instruction_id"></textarea>
+              <button id="run_button" onclick="runInstruction()">Run</button>
+            </div>
+            <div id="SVG"><svg id="SVG"></svg></div>
+        </div>
+        <script>
+        var e, val;
+        var instr_count = 0;
+
+        const getDiagramId = async (json_text) => {
+          console.log('json_text ['+json_text+']');
+          let json_obj = eval('(' + json_text + ')');
+          let json = JSON.stringify(json_obj);
+          console.log('Testing : ' + json)
+          const response = await fetch('http://127.0.0.1:3000/diagrams', {
+            method: 'PUT',
+            body: json,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const myJson = await response.json(); //extract JSON from the http response
+          const svg = await myJson['svg'];
+          //console.log(myJson);
+          //return myJson['svg'];
+          return svg;
+        }
+
+        e = document.getElementById('JSON');
+        e.addEventListener("input", generateSVG);
+
+        function runInstruction() { 
+          var instr = document.getElementById('llm_instruction_id');
+          console.log("Running instruction" + instr.value);
+          var instr_log = document.getElementById('llm_history_id');
+          instr_count += 1;
+          if (instr_count <= 1) { 
+            instr_log.value = '1: ' + instr.value + '=' + instr_count;
+          } else {
+            instr_log.value += '\n' + instr_count + ': ' + instr.value;
+          }
+          // Clear the old instruction
+          instr.value = "";
+        }
+
+        function generateSVG() { 
+          var json_in = document.getElementById('JSON');
+          let svg = getDiagramId(json_in.value);
+
+          svg.then(data => {
+            var SVG_ID = document.getElementById('SVG');
+            SVG_ID.innerHTML = data;
+            console.log('Resolved SVG text');
+          })
+        }
+
+        val = `{signal: [\n  {name: \'clk\', wave: \'p.....|...\'},\n  {name: \'dat\', wave: \'x.345x|=.x\', data: [\'head\', \'body\', \'tail\', \'data\']},\n  {name: \'req\', wave: \'0.1..0|1.0\'},\n  {},\n  {name: \'ack\', wave: \'1.....|01.\'}\n]}\n`;
+        e.value = val; 
+        generateSVG();
+        </script>
+    </body>
+</html>
