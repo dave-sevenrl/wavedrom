@@ -5,7 +5,7 @@
 #
 import requests
 import argparse
-import time
+import os
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
@@ -14,13 +14,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.local:
-        main_url = 'http://127.0.0.1:8000'
+        main_url = 'http://127.0.0.1:8080'
     else:
         main_url = 'https://wavedrom-llm-802454156912.us-west1.run.app'
 
     # Get a new chat ID
     api_url = f"{main_url}/newchat"
-    todo = {"private_key": "sadas12342109"}
+    api_key = os.getenv("WAVEDROM_API_KEY", "")
+    todo = {"api_key": api_key}
     try:
         response = requests.post(api_url, json=todo)
         print(response.status_code)
