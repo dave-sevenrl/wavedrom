@@ -10,21 +10,27 @@ import time
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-N','--num-pts', default=65536, type=int, help='Sets number of points')
-    parser.add_argument('--delta-v', type=float, help='Sets quantization set in mV')
+    parser.add_argument('--local', action='store_true', help='Sets localhost instead of server')
     args = parser.parse_args()
 
-    main_url = 'http://wavedrom-llm-802454156912.us-west1.run.app'
-    #main_url = 'http://127.0.0.1:3000'
+    if args.local:
+        main_url = 'http://127.0.0.1:8000'
+    else:
+        main_url = 'https://wavedrom-llm-802454156912.us-west1.run.app'
 
     # Get a new chat ID
     api_url = f"{main_url}/newchat"
-    todo = {"private_key": "1234"}
-    response = requests.post(api_url, json=todo)
-    print(response.status_code)
-    print(response)
-    print(f'response: {response.json()}')
-    resp_data = response.json()
-    chat_id = resp_data['chat_id']
+    todo = {"private_key": "sadas12342109"}
+    try:
+        response = requests.post(api_url, json=todo)
+        print(response.status_code)
+        print(response)
+        print(f'response: {response.json()}')
+        resp_data = response.json()
+        chat_id = resp_data['chat_id']
+    except:
+        print(f"FAILED to connect to {main_url}")
+        exit()
 
     # Generate two reponses
     api_url = f"{main_url}/chat/{chat_id}"
