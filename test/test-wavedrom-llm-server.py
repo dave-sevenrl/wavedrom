@@ -37,8 +37,8 @@ if __name__ == '__main__':
     api_url = f"{main_url}/chat/{chat_id}"
     todo = {"prompt" : "Generate a clock named PCK with 10 negative edges"}
     response = requests.put(api_url,json=todo)
-    resp_data = response.json()
     if response.status_code == 200:
+        resp_data = response.json()
         print(f'Successfully produced {resp_data["json"]}')
     else:
         print(f'Error {response.status_code} - failed to use model {chat_id}')
@@ -46,39 +46,34 @@ if __name__ == '__main__':
     # Send a second prompt
     todo = {"prompt" : "Add a signal PDAT with 4 cycles logic zero followed by 6 xs"}
     response = requests.put(api_url,json=todo)
-    resp_data = response.json()
     if response.status_code == 200:
+        resp_data = response.json()
         print(f'Successfully produced {resp_data["json"]}')
     else:
+        resp_data = {}
         print(f'Error {response.status_code} - failed to use model {chat_id}')
 
     # Create an SVG file
-    api_url = f"{main_url}/create_svg"
-    #todo = {"json" : resp_data["json"]}
-    response = requests.put(api_url,json=resp_data)
-    resp_data = response.json()
-    if response.status_code == 200:
-        print(f'Successfully produced {len(resp_data["svg"])}-byte SVG object')
-    else:
-        print(f'Error {response.status_code} - failed to produce SVG output')
+    if 'json' in resp_data:
+        api_url = f"{main_url}/create_svg"
+        #todo = {"json" : resp_data["json"]}
+        response = requests.put(api_url,json=resp_data)
+        if response.status_code == 200:
+            resp_data = response.json()
+            print(f'Successfully produced {len(resp_data["svg"])}-byte SVG object')
+        else:
+            resp_data = {}
+            print(f'Error {response.status_code} - failed to produce SVG output')
 
     # Create an PNG file
-    api_url = f"{main_url}/create_png"
-    response = requests.put(api_url,json=resp_data)
-    resp_data = response.json()
-    if response.status_code == 200:
-        print(f'Successfully produced {len(resp_data["png"])}-byte PNG')
-    else:
-        print(f'Error {response.status_code} - failed to produce PNG output')
-
-    # Finally delete itt
-    if False:
-        api_url = f"{main_url}/chat/{chat_id}"
-        response = requests.delete(api_url)
-        if response.status_code == 204:
-            print(f'Successfully deleted {chat_id}')
+    if 'svg' in resp_data:
+        api_url = f"{main_url}/create_png"
+        response = requests.put(api_url,json=resp_data)
+        if response.status_code == 200:
+            resp_data = response.json()
+            print(f'Successfully produced {len(resp_data["png"])}-byte PNG')
         else:
-            print(f'Error {response.status_code} - failed to delete {chat_id}')
+            print(f'Error {response.status_code} - failed to produce PNG output')
 
 #
 #    # Get the reponse
