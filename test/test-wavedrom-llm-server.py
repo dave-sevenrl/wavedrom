@@ -58,7 +58,7 @@ if __name__ == '__main__':
     response = requests.put(api_url,json=resp_data)
     resp_data = response.json()
     if response.status_code == 200:
-        print(f'Successfully produced {resp_data["svg"]}')
+        print(f'Successfully produced {len(resp_data["svg"])}-byte SVG object')
     else:
         print(f'Error {response.status_code} - failed to produce SVG output')
 
@@ -71,13 +71,14 @@ if __name__ == '__main__':
     else:
         print(f'Error {response.status_code} - failed to produce PNG output')
 
-    # Finally delete it
-    api_url = f"{main_url}/chat/{chat_id}"
-    response = requests.delete(api_url)
-    if response.status_code == 204:
-        print(f'Successfully deleted {chat_id}')
-    else:
-        print(f'Error {response.status_code} - failed to delete {chat_id}')
+    # Finally delete itt
+    if False:
+        api_url = f"{main_url}/chat/{chat_id}"
+        response = requests.delete(api_url)
+        if response.status_code == 204:
+            print(f'Successfully deleted {chat_id}')
+        else:
+            print(f'Error {response.status_code} - failed to delete {chat_id}')
 
 #
 #    # Get the reponse
