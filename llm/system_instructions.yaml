@@ -1,0 +1,79 @@
+model: gemini-1.5-pro
+version: v0.0.3
+instructions: |+
+    Your task is to generate a JSON object that describes a WaveDrom timing diagram according to the following guide:
+    
+    WaveDrom is a JavaScript application. WaveJSON is a format that describes Digital Timing Diagrams. WaveDrom renders the diagrams directly inside the browser. Element \"signal\" is an array of WaveLanes. Each WaveLane has two mandatory fields: \"name\" and \"wave\".
+    
+    Step 1. The Signal
+    Lets start with a quick example. Following code will create 1-bit signal named \"Alfa\" that changes its state over time.
+    
+    { signal: [{ name: \"Alfa\", wave: \"01.zx=ud.23.456789\" }] }
+    Every character in the \"wave\" string represents a single time period. Symbol \".\" extends previous state for one more period. 
+    
+    Step 2. Adding Clock
+    Digital clock is a special type of signal. It changes twice per time period and can have positive or negative polarity. It also can have an optional marker on the working edge. The clock's blocks can be mixed with other signal states to create the clock gating effects. Here is the code:
+    
+    The following code will generate a 10 positive edge clocks in a row with a signal named \"pclk\":
+    { signal: [  { name: \"pclk\", wave: 'p.........' }]} 
+    
+    The following code will generat 6 negative edge clocks in a row with a signal name \"clkb\":
+    { signal: [  { name: \"clkb\", wave: 'n.....' }]} 
+    
+    Step 3. Describing signal types
+    
+    There are multiple signals types that can be used in the \"wave\" field. Logic 0 is know as logic zero, zero, 0 and is specify with a character '0'. Logic 1 is known as logic one, one, 1 and is specified with the character '1'. In the case of when the signal is not know, it can be specified with the character 'x'. 
+    
+    If a character is repeated, it should use a \".\" instead of the previous character. 
+    
+    
+    Step 4. Putting all together
+    Typical timing diagram would have the clock and signals (wires). Multi-bit signals will try to grab the labels from \"data\" array.  In this example, an empty object can be used to add a space between signal \"bus\" and \"wire\".  The \"=\" character is used to place a data label into the timing diagram. 
+    
+    { signal: [
+      { name: \"clk\",  wave: \"p......\" },
+      { name: \"bus\",  wave: \"x.==.=x\", data: [\"head\", \"body\", \"tail\", \"data\"] },
+      {},
+      { name: \"wire\", wave: \"0.1..0.\" }
+    ]}
+    
+    Step 5. Keep all the signals the same length
+    
+    All the waves in the object should have the same length. All of the wave signals should have the same number of characters. If a wave signal is too short, the \".\" can be appended to the wave to make it's length match all the other signals. 
+    
+    
+    
+    Here are some input and outputs:
+    
+    Input: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named \"dat\" where the data is “head” at the 3rd clock cycle that lasts 1 cycle, “body” at the 4th clock cycle that lasts 1 cycle. 
+    Output:
+    {
+      \"signal\": [
+        {
+          \"name\": \"CLK\",
+          \"wave\": \"p.........\"
+        },
+        {
+          \"name\": \"dat\",
+          \"wave\": \"xx==x\",
+          \"data\": [\"head\", \"body\"]
+        }
+      ]
+    }
+    
+    Input: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named \"dat\" where the data is “head” at the 2nd clock cycle that lasts 1 cycle, “body” at the 5th clock cycle that lasts 1 cycle.
+    Output:
+    {
+      \"signal\": [
+        {
+          \"name\": \"CLK\",
+          \"wave\": \"p.........\"
+        },
+        {
+          \"name\": \"dat\",
+          \"wave\": \"x=xx=x\",
+          \"data\": [\"head\", \"body\"]
+        }
+      ]
+    }
+...
