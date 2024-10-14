@@ -1,5 +1,5 @@
 model: gemini-1.5-pro
-version: v0.0.3
+version: v0.0.4
 instructions: |+
     Your task is to generate a JSON object that describes a WaveDrom timing diagram according to the following guide:
     
@@ -41,39 +41,121 @@ instructions: |+
     
     All the waves in the object should have the same length. All of the wave signals should have the same number of characters. If a wave signal is too short, the \".\" can be appended to the wave to make it's length match all the other signals. 
     
+    Here are some input and outputs
     
-    
-    Here are some input and outputs:
-    
-    Input: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named \"dat\" where the data is “head” at the 3rd clock cycle that lasts 1 cycle, “body” at the 4th clock cycle that lasts 1 cycle. 
-    Output:
+    Inputs: Generate an I2C write packet with one byte
+    Outputs:
     {
-      \"signal\": [
-        {
-          \"name\": \"CLK\",
-          \"wave\": \"p.........\"
-        },
-        {
-          \"name\": \"dat\",
-          \"wave\": \"xx==x\",
-          \"data\": [\"head\", \"body\"]
-        }
-      ]
+        "signal": [
+            {
+                "name": "SDA",
+                "wave": "1033333330.33333333101",
+                "data": [
+                    "A7",
+                    "A6",
+                    "A5",
+                    "A4",
+                    "A3",
+                    "A2",
+                    "A1",
+                    "D7",
+                    "D6",
+                    "D5",
+                    "D4",
+                    "D3",
+                    "D2",
+                    "D1",
+                    "D0"
+                ]
+            },
+            {
+                "name": "SCL",
+                "wave": "1.0p.................1.",
+                "phase": 0.5
+            }
+        ]
     }
     
-    Input: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named \"dat\" where the data is “head” at the 2nd clock cycle that lasts 1 cycle, “body” at the 5th clock cycle that lasts 1 cycle.
-    Output:
+    Inputs: Generate two APB writes where the first one returns PREADY immediately and the second one stretches for 2 cycles
+    Outputs:
     {
-      \"signal\": [
-        {
-          \"name\": \"CLK\",
-          \"wave\": \"p.........\"
-        },
-        {
-          \"name\": \"dat\",
-          \"wave\": \"x=xx=x\",
-          \"data\": [\"head\", \"body\"]
-        }
-      ]
+        "signal": [
+            {
+                "name": "PCLK",
+                "wave": "p........"
+            },
+            {
+                "name": "PADDR",
+                "wave": "x..3.x3..x",
+                "data": [
+                    "Addr0",
+                    "Addr1"
+                ]
+            },
+            {
+                "name": "PWRITE",
+                "wave": "0..1......"
+            },
+            {
+                "name": "PSEL",
+                "wave": "0..1.01..0"
+            },
+            {
+                "name": "PENABLE",
+                "wave": "0...10.1.0"
+            },
+            {
+                "name": "PWDATA",
+                "wave": "x..3.x3..x",
+                "data": [
+                    "Data0",
+                    "Data1"
+                ]
+            },
+            {
+                "name": "PREADY",
+                "wave": "1......01."
+            }
+        ]
     }
+    
+    Inputs: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named "dat" where the data is “head” at the 3rd clock cycle that lasts 1 cycle, “body” at the 4th clock cycle that lasts 1 cycle.
+    Outputs:
+    {
+        "signal": [
+            {
+                "name": "CLK",
+                "wave": "p........."
+            },
+            {
+                "name": "dat",
+                "wave": "xx==x",
+                "data": [
+                    "head",
+                    "body"
+                ]
+            }
+        ]
+    }
+    
+    Inputs: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named "dat" where the data is “head” at the 2nd clock cycle that lasts 1 cycle, “body” at the 5th clock cycle that lasts 1 cycle.
+    Outputs:
+    {
+        "signal": [
+            {
+                "name": "CLK",
+                "wave": "p........."
+            },
+            {
+                "name": "dat",
+                "wave": "x=xx=x",
+                "data": [
+                    "head",
+                    "body"
+                ]
+            }
+        ]
+    }
+    
+    
 ...
