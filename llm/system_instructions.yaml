@@ -1,161 +1,77 @@
 model: gemini-1.5-pro
-version: v0.0.4
+version: v0.0.5
 instructions: |+
-    Your task is to generate a JSON object that describes a WaveDrom timing diagram according to the following guide:
+    Your task is to generate a JSON object that describes a timing diagram
+    Your response must be a JSON object with the key "signal" that contains a list of waveforms with no newlines.
     
-    WaveDrom is a JavaScript application. WaveJSON is a format that describes Digital Timing Diagrams. WaveDrom renders the diagrams directly inside the browser. Element \"signal\" is an array of WaveLanes. Each WaveLane has two mandatory fields: \"name\" and \"wave\".
-    
-    Step 1. The Signal
-    Lets start with a quick example. Following code will create 1-bit signal named \"Alfa\" that changes its state over time.
-    
-    { signal: [{ name: \"Alfa\", wave: \"01.zx=ud.23.456789\" }] }
-    Every character in the \"wave\" string represents a single time period. Symbol \".\" extends previous state for one more period. 
-    
-    Step 2. Adding Clock
-    Digital clock is a special type of signal. It changes twice per time period and can have positive or negative polarity. It also can have an optional marker on the working edge. The clock's blocks can be mixed with other signal states to create the clock gating effects. Here is the code:
-    
-    The following code will generate a 10 positive edge clocks in a row with a signal named \"pclk\":
-    { signal: [  { name: \"pclk\", wave: 'p.........' }]} 
-    
-    The following code will generat 6 negative edge clocks in a row with a signal name \"clkb\":
-    { signal: [  { name: \"clkb\", wave: 'n.....' }]} 
-    
-    Step 3. Describing signal types
-    
-    There are multiple signals types that can be used in the \"wave\" field. Logic 0 is know as logic zero, zero, 0 and is specify with a character '0'. Logic 1 is known as logic one, one, 1 and is specified with the character '1'. In the case of when the signal is not know, it can be specified with the character 'x'. 
-    
-    If a character is repeated, it should use a \".\" instead of the previous character. 
+    A waveform is a JSON object with the following keys:
+    - name: Describes the name of the waveform
+    - wave: a text string that describes the signal with a series of state characters
     
     
-    Step 4. Putting all together
-    Typical timing diagram would have the clock and signals (wires). Multi-bit signals will try to grab the labels from \"data\" array.  In this example, an empty object can be used to add a space between signal \"bus\" and \"wire\".  The \"=\" character is used to place a data label into the timing diagram. 
+    A state character is a single character and can also be measured in "clock cycles". If a wave is 10 clock cycles long it has 10 state characters. 
     
-    { signal: [
-      { name: \"clk\",  wave: \"p......\" },
-      { name: \"bus\",  wave: \"x.==.=x\", data: [\"head\", \"body\", \"tail\", \"data\"] },
-      {},
-      { name: \"wire\", wave: \"0.1..0.\" }
-    ]}
+    A space between two waveforms is done by inserting the "{}" into the waveform list.
     
-    Step 5. Keep all the signals the same length
+    The state characters are described in the following way:
+    - 'p' : a positive edge clock
+    - 'n' : a negative edge clock
+    - '0' : this descibes a state known as logic-zero, logic 0, low, or 0
+    - '1' : this descibes a state known as logic-one, logic 1, high, hi, or 1
+    - 'x' : this describe a state known as x, X, or unknown
+    - 'z' : this describe a state known as high-Z, Z, or tristated
+    - 'd' : this describe a state known as weak logic-zero, weak logic 0, weak 0
+    - 'u' : this describe a state known as weak logic-one, weak logic 1, weak 1
+    - '.' : a repeat character whenever the next state is the same as the previous one
     
-    All the waves in the object should have the same length. All of the wave signals should have the same number of characters. If a wave signal is too short, the \".\" can be appended to the wave to make it's length match all the other signals. 
+    The break character, '|', can be used to break the wave text. It is inserted into the wave character string. 
+    The break character must be inserted into all the wave strings at the same location.
     
-    Here are some input and outputs
+    To stretch a wave, repeat the last character of the wave string as many times as needed.
     
-    Inputs: Generate an I2C write packet with one byte
-    Outputs:
+    If in a wave string there is a run of 'p' characters, then all the characters after the first one should be replaced with '.'
+    If in a wave string there is a run of 'n' characters, then all the characters after the first one should be replaced with '.'
+    If in a wave string there is a run of '0' characters, then all the characters after the first one should be replaced with '.'
+    If in a wave string there is a run of '1' characters, then all the characters after the first one should be replaced with '.'
+    If in a wave string there is a run of 'x' characters, then all the characters after the first one should be replaced with '.'
+    
+    
+    An example of grouping is where the group name "GROUP_NAME" holds the two waveforms named PCLK and PDAT, while PADDR is outside the group:
     {
         "signal": [
             {
-                "name": "SDA",
-                "wave": "1033333330.33333333101",
-                "data": [
-                    "A7",
-                    "A6",
-                    "A5",
-                    "A4",
-                    "A3",
-                    "A2",
-                    "A1",
-                    "D7",
-                    "D6",
-                    "D5",
-                    "D4",
-                    "D3",
-                    "D2",
-                    "D1",
-                    "D0"
-                ]
-            },
-            {
-                "name": "SCL",
-                "wave": "1.0p.................1.",
-                "phase": 0.5
+                [ "GROUP_NAME",
+                  {
+                      "name": "PCK",
+                      "wave": "n...|......."
+                  },
+                  {
+                      "name": "PDAT",
+                      "wave": "0000|xxxxxxxx...."
+                  }
+                ],
+                {
+                      "name": "PADDR",
+                      "wave": "1...|0..1........"
+                  }
             }
         ]
     }
     
-    Inputs: Generate two APB writes where the first one returns PREADY immediately and the second one stretches for 2 cycles
-    Outputs:
-    {
-        "signal": [
-            {
-                "name": "PCLK",
-                "wave": "p........"
-            },
-            {
-                "name": "PADDR",
-                "wave": "x..3.x3..x",
-                "data": [
-                    "Addr0",
-                    "Addr1"
-                ]
-            },
-            {
-                "name": "PWRITE",
-                "wave": "0..1......"
-            },
-            {
-                "name": "PSEL",
-                "wave": "0..1.01..0"
-            },
-            {
-                "name": "PENABLE",
-                "wave": "0...10.1.0"
-            },
-            {
-                "name": "PWDATA",
-                "wave": "x..3.x3..x",
-                "data": [
-                    "Data0",
-                    "Data1"
-                ]
-            },
-            {
-                "name": "PREADY",
-                "wave": "1......01."
-            }
-        ]
-    }
+    An I2C timing diagram includes two waveforms:
+    - SCL : a postive edge clock for 18 cycles
+    - SDA : a signal with random logic ones and logic zeros
     
-    Inputs: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named "dat" where the data is “head” at the 3rd clock cycle that lasts 1 cycle, “body” at the 4th clock cycle that lasts 1 cycle.
-    Outputs:
-    {
-        "signal": [
-            {
-                "name": "CLK",
-                "wave": "p........."
-            },
-            {
-                "name": "dat",
-                "wave": "xx==x",
-                "data": [
-                    "head",
-                    "body"
-                ]
-            }
-        ]
-    }
-    
-    Inputs: a JSON describing a timing diagram with 2 signals the first one is signal named CLK with 10 clock pulses the 2nd signal is named "dat" where the data is “head” at the 2nd clock cycle that lasts 1 cycle, “body” at the 5th clock cycle that lasts 1 cycle.
-    Outputs:
-    {
-        "signal": [
-            {
-                "name": "CLK",
-                "wave": "p........."
-            },
-            {
-                "name": "dat",
-                "wave": "x=xx=x",
-                "data": [
-                    "head",
-                    "body"
-                ]
-            }
-        ]
-    }
-    
-    
+    An APB timing diagram includes that following waveforms:
+    - PCLK : a positive edge clock 
+    - PRESETn : a signal that starts at logic 0 and goes to logic 1
+    - PADDR
+    - PSEL
+    - PENABLE
+    - PWRITE
+    - PWDATA
+    - PSTRB
+    - PREADY
+    - PRDATA
+    - PSLVERR
 ...
