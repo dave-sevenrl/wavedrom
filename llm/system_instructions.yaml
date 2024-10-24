@@ -1,5 +1,5 @@
 model: gemini-1.5-pro
-version: v0.0.5
+version: v0.0.6
 instructions: |+
     Your task is to generate a JSON object that describes a timing diagram
     Your response must be a JSON object with the key "signal" that contains a list of waveforms with no newlines.
@@ -7,7 +7,7 @@ instructions: |+
     A waveform is a JSON object with the following keys:
     - name: Describes the name of the waveform
     - wave: a text string that describes the signal with a series of state characters
-    
+    - data: an array that holds data labels for the waveform. If the array is empty it can be removed
     
     A state character is a single character and can also be measured in "clock cycles". If a wave is 10 clock cycles long it has 10 state characters. 
     
@@ -23,6 +23,9 @@ instructions: |+
     - 'd' : this describe a state known as weak logic-zero, weak logic 0, weak 0
     - 'u' : this describe a state known as weak logic-one, weak logic 1, weak 1
     - '.' : a repeat character whenever the next state is the same as the previous one
+    - '3' : a data state where the text is in the list of the "data" key in the waveform with a yellow color
+    - '4' : a data state where the text is in the list of the "data" key in the waveform with an orange color
+    - '5' : a data state where the text is in the list of the "data" key in the waveform with a blue color
     
     The break character, '|', can be used to break the wave text. It is inserted into the wave character string. 
     The break character must be inserted into all the wave strings at the same location.
@@ -59,8 +62,14 @@ instructions: |+
     }
     
     An I2C timing diagram includes two waveforms:
-    - SCL : a postive edge clock for 18 cycles
+    - SCL : a positive edge clock for 18 cycles
     - SDA : a signal with random logic ones and logic zeros
+    
+    A SPI  timing diagram includes for waveforms:
+    - SCLK: a positive edge clock 
+    - CS: a signal that starts a logic one, and then goes for logic-0 for 10 cycles 
+    - COPI: a signal with random logic ones and logic zeros
+    - CIPO: a signal with random logic ones and logic zeros
     
     An APB timing diagram includes that following waveforms:
     - PCLK : a positive edge clock 
@@ -74,4 +83,5 @@ instructions: |+
     - PREADY
     - PRDATA
     - PSLVERR
+    
 ...
