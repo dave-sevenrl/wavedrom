@@ -1,5 +1,5 @@
 model: gemini-1.5-pro
-version: v0.0.6
+version: v0.0.7
 instructions: |+
     Your task is to generate a JSON object that describes a timing diagram
     Your response must be a JSON object with the key "signal" that contains a list of waveforms with no newlines.
@@ -30,14 +30,7 @@ instructions: |+
     The break character, '|', can be used to break the wave text. It is inserted into the wave character string. 
     The break character must be inserted into all the wave strings at the same location.
     
-    To stretch a wave, repeat the last character of the wave string as many times as needed.
-    
-    If in a wave string there is a run of 'p' characters, then all the characters after the first one should be replaced with '.'
-    If in a wave string there is a run of 'n' characters, then all the characters after the first one should be replaced with '.'
-    If in a wave string there is a run of '0' characters, then all the characters after the first one should be replaced with '.'
-    If in a wave string there is a run of '1' characters, then all the characters after the first one should be replaced with '.'
-    If in a wave string there is a run of 'x' characters, then all the characters after the first one should be replaced with '.'
-    
+    To stretch or extend a wave, insert the '.' character as many times as needed.
     
     An example of grouping is where the group name "GROUP_NAME" holds the two waveforms named PCLK and PDAT, while PADDR is outside the group:
     {
@@ -83,5 +76,89 @@ instructions: |+
     - PREADY
     - PRDATA
     - PSLVERR
+    
+    
+    A memory timing diagram includes the following waveforms:
+    - clk
+    - ce
+    - web
+    - addr
+    - wdata
+    - rdata
+    
+    An AXI write timing diagram includes the following waveforms:
+    - ACLK
+    - AWADDR
+    - AWVALID
+    - AWREADY
+    - WDATA
+    - WLAST
+    - WVALID
+    - WREADY
+    - BRESP
+    - BVALID
+    - BREADY
+    
+    An AXI read timing diagram includes the following waveforms:
+    - ACLK
+    - ARADDR
+    - ARVALID
+    - ARREADY
+    - RDATA
+    - RLAST
+    - RVALID
+    - RREADY
+    Here are some input and outputs
+    
+    Inputs:
+    Generate an I2C read packet with one byte
+    Outputs:
+    {"signal": [{"name": "SCL", "wave": "1.0p|.....|..1.", "phase": 0.5}, {"name": "SDA", "wave": "103.|304..|0.1", "data": ["Addr[6:0]", "R=1", "data0[7:0]"]}]}
+    
+    Inputs:
+    Generate an I2C read packet with one byte
+    Outputs:
+    {"signal": [{"name": "SCL", "wave": "1.0p|.....|....|..1", "phase": 0.5}, {"name": "SDA", "wave": "103.|304..|04..|0.1", "data": ["Addr[6:0]", "R=1", "data0[7:0]", "data1[7:0]"]}]}
+    
+    Inputs:
+    Generate an I2C read packet with one byte
+    Outputs:
+    {"signal": [{"name": "SCL", "wave": "1.0p|.....|....|..1.", "phase": 0.5}, {"name": "SDA", "wave": "103.|303..|03..|0.1", "data": ["Addr[6:0]", "W=0", "data0[7:0]", "data1[7:0]"]}]}
+    
+    Inputs:
+    Generate an APB write to address Addr0 with PWDATA set as Data0 using a PSTRB of 0xF. The PREADY stays high.
+    Outputs:
+    {"signal": [{"name": "PCLK", "wave": "p..."}, {"name": "PADDR", "wave": "x3.x", "data": ["Addr0"]}, {"name": "PWRITE", "wave": "01.."}, {"name": "PSEL", "wave": "01.0"}, {"name": "PENABLE", "wave": "0.10"}, {"name": "PSTRB", "wave": "x3.x", "data": ["0xF"]}, {"name": "PWDATA", "wave": "x3.x", "data": ["Data0"]}, {"name": "PREADY", "wave": "1..."}]}
+    
+    Inputs:
+    Generate an APB write to address Addr0 with PWDATA set as Data0 using a PSTRB of 0xF. The PREADY is low for the first cycle after PENABLE and then goes high on the 2nd cycle. The PADDR, PSTRB and PWDATA must have consant until PREADY and PENABLE are logic high in the same cycle.
+    Outputs:
+    {"signal": [{"name": "PCLK", "wave": "p...."}, {"name": "PADDR", "wave": "x3..x", "data": ["Addr0"]}, {"name": "PWRITE", "wave": "01..."}, {"name": "PSEL", "wave": "01..0"}, {"name": "PENABLE", "wave": "0.1.0"}, {"name": "PSTRB", "wave": "x3..x", "data": ["0xF"]}, {"name": "PWDATA", "wave": "x3..x", "data": ["Data0"]}, {"name": "PRDATA", "wave": "x...."}, {"name": "PREADY", "wave": "1.01."}]}
+    
+    Inputs:
+    Generate an APB read to address Addr0 by setting PWRITE to logic 0. PRDATA shows the output data D0 for 1 cycle while PREADY is logic one.
+    Outputs:
+    {"signal": [{"name": "PCLK", "wave": "p...."}, {"name": "PADDR", "wave": "x3..x", "data": ["Addr0"]}, {"name": "PWRITE", "wave": "0...."}, {"name": "PSEL", "wave": "01..0"}, {"name": "PENABLE", "wave": "0.1.0"}, {"name": "PSTRB", "wave": "x...."}, {"name": "PWDATA", "wave": "x...."}, {"name": "PRDATA", "wave": "x..3x", "data": ["D0"]}, {"name": "PREADY", "wave": "1.01."}]}
+    
+    Inputs:
+    Build an AXI read transaction with 1 cycle delay on ARREADY and RREADY
+    Outputs:
+    {"signal": [{"name": "ACLK", "wave": "p......"}, {"name": "ARADDR", "wave": "x3.x...", "data": ["a0"]}, {"name": "ARVALID", "wave": "01.0..."}, {"name": "ARREADY", "wave": "0.1...."}, {"name": "RDATA", "wave": "x..3.3x", "data": ["d0", "d1"]}, {"name": "RLAST", "wave": "x..0.1x"}, {"name": "RVALID", "wave": "0..1..0"}, {"name": "RREADY", "wave": "0...1.."}]}
+    
+    Inputs:
+    Build an AXI read transaction with 1 cycle delay on ARREADY and RREADY
+    Outputs:
+    {"signal": [{"name": "ACLK", "wave": "p......."}, {"name": "AWADDR", "wave": "x3.x....", "data": ["a0"]}, {"name": "AWVALID", "wave": "01.0...."}, {"name": "AWREADY", "wave": "0.1....."}, {"name": "WDATA", "wave": "x..3.3x.", "data": ["d0", "d1"]}, {"name": "WLAST", "wave": "x..0.1x."}, {"name": "WVALID", "wave": "0..1..0."}, {"name": "WREADY", "wave": "0...1..."}, {"name": "BRESP", "wave": "x.....3x", "data": ["okay"]}, {"name": "BVALID", "wave": "0.....10"}, {"name": "BREADY", "wave": "0...1..."}]}
+    
+    Inputs:
+    Build a memory write transaction
+    Outputs:
+    {"signal": [{"name": "clk", "wave": "p.."}, {"name": "ce", "wave": "010"}, {"name": "web", "wave": "x0x"}, {"name": "addr", "wave": "x3x", "data": ["a0"]}, {"name": "wdata", "wave": "x3x", "data": ["d0"]}, {"name": "rdata", "wave": "x.."}]}
+    
+    Inputs:
+    Build a memory read transaction
+    Outputs:
+    {"signal": [{"name": "clk", "wave": "p..."}, {"name": "ce", "wave": "010."}, {"name": "web", "wave": "x1x."}, {"name": "addr", "wave": "x3x.", "data": ["a0"]}, {"name": "wdata", "wave": "x..."}, {"name": "rdata", "wave": "x.3x", "data": ["d0"]}]}
+    
     
 ...
